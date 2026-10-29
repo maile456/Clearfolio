@@ -1,0 +1,4 @@
+interface:
+  display_name: "Clearfolio · 清爽文档与作品秩序"
+  short_description: "用清晰排版、轻量导航与克制色彩构建有秩序的博客、知识库和内容型产品页面"
+  default_prompt: "使用 $clearfolio，按项目用途创建清爽、有内容秩序且有辨识度的前端，保留现有框架和功能。"

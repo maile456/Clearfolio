@@ -1,0 +1,13 @@
+{
+  "name": "clearfolio",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Clearfolio: 清爽文档与作品秩序",
+  "scripts": {
+    "check": "node scripts/check.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT"
+}
