@@ -20,3 +20,23 @@ License: https://unsplash.com/license
 - `docs/images/interior-2.jpg`: https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=1400&q=85
 
 Project names, sample descriptions, accounts and data are illustrative. Photography is not evidence of a commission, customer relationship or author identity. Avatar photos represent demo accounts only.
+
+
+## Open-source fonts
+
+The homepage bundles Inter and Libre Caslon Display. Both are distributed under the SIL Open Font License 1.1. Font files retain their upstream licensing and are not relicensed under the code license.
+
+- `docs/fonts/InterVariable.woff2`: https://github.com/rsms/inter/blob/master/docs/font-files/InterVariable.woff2
+- Inter license: [docs/fonts/Inter-OFL.txt](docs/fonts/Inter-OFL.txt)
+- `docs/fonts/LibreCaslonDisplay-Regular.ttf`: https://github.com/google/fonts/tree/main/ofl/librecaslondisplay
+- Libre Caslon Display license: [docs/fonts/LibreCaslonDisplay-OFL.txt](docs/fonts/LibreCaslonDisplay-OFL.txt)
+
+A bundled font may be reserved for adaptation and not used by every page. The original functional workspace keeps its own style and token files under `docs/workspace/`; shared vendor, font and photography files remain under `docs/`.
+
+## Reference sites
+
+Official sites were examined as design references. Official screenshots, downloaded reference-only images, source captures, logos, proprietary fonts and marketing copy are not included in this repository. The example brand, product text, sample interface and JavaScript behavior are original project work.
+
+## Original Generated Illustration
+
+`docs/images/paper-collage.png` is an original illustration made for this project using the built-in ImageGen tool. The prompt requested bright near-white tactile paper, a blank center, overlapping torn white sheets, a charcoal sheet entering at the lower left and graph paper at the lower right, without text, logos or product UI. It is not an official Craft asset.

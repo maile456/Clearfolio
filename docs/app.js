@@ -1,164 +1,82 @@
 (() => {
-  const projects = [
-    { id: 'daylight-order', number: '01', title: '白昼的秩序', english: 'The order of daylight', category: 'architecture', categoryName: '建筑', image: 'images/architecture-1.jpg', alt: '用于建筑观察系列的空间摄影', year: '2026', series: '光与结构', format: '建筑观察 / 单幅', description: '光线经过立面，留下明暗分明的边界。这组示例从空间的线条与比例出发，记录建筑安静而具体的表情。' },
-    { id: 'quiet-interior', number: '02', title: '留白之间', english: 'A room to pause', category: 'interior', categoryName: '室内', image: 'images/interior-1.jpg', alt: '明亮客厅里的沙发、木质家具和室内光线', year: '2026', series: '停留片刻', format: '室内观察 / 单幅', description: '空间并不总需要被填满。在留白、材质与光线之间，寻找一种可以慢下来观看的日常尺度。名称与叙述为创作示例。' },
-    { id: 'city-facets', number: '03', title: '城市的折面', english: 'Fragments of the city', category: 'city', categoryName: '城市', image: 'images/architecture-3.jpg', alt: '用于城市空间观察系列的建筑摄影', year: '2026', series: '街道旁边', format: '城市观察 / 单幅', description: '把熟悉的空间重新看一遍：从重复的轮廓到偶然的交界，城市里的片段在视线中连接成新的秩序。' },
-    { id: 'geometry-study', number: '04', title: '几何与停顿', english: 'Notes on geometry', category: 'architecture', categoryName: '建筑', image: 'images/architecture-1.jpg', alt: '同一建筑素材用于几何构成研究的系列片段', year: '2026', series: '结构笔记', format: '构成研究 / 系列片段', description: '回到同一张影像，重新辨认线、面与空隙之间的关系。这是基于共享素材的第二组示例构成研究，而非另一项真实委托。' },
-    { id: 'window-notes', number: '05', title: '一段安静', english: 'An ordinary stillness', category: 'interior', categoryName: '室内', image: 'images/interior-2.jpg', alt: '自然光下的室内陈设与简洁空间', year: '2026', series: '日常的尺度', format: '空间研究 / 单幅', description: '不用宏大的叙述，只记录一段空间带来的停顿。通过室内的材质与光线，组织一页关于日常尺度的示例笔记。' }
+  const $ = selector => document.querySelector(selector);
+  const $$ = selector => [...document.querySelectorAll(selector)];
+  const storageKey = 'clearfolio-home-notes-v2';
+  const originals = [
+    { title: '慢慢读的书单', theme: 'rose', body: '关于日常\n把生活里的细节，一点点收集起来。\n\n小小的实验\n带着好奇心，试一件平时不会做的事。' },
+    { title: '一周运动计划', theme: 'white', body: '星期一\n晨间拉伸，舒展身体。\n\n星期三\n沿着河边散步半小时。\n\n星期五\n轻松跑步，不着急。' },
+    { title: '周末去哪里', theme: 'lemon', body: '和朋友约一个没有闹钟的周末。\n\n星期五傍晚\n去城市另一边的小书店，在那里选一本没读过的书。\n\n星期六\n找一家有阳光的咖啡馆。' },
+    { title: '课程笔记', theme: 'sage', body: '01. 观察光线\n02. 记录声音\n03. 多问一个问题\n04. 留下自己的判断\n\n今天的任务\n整理前三节课的笔记。' },
+    { title: '想去的美术馆', theme: 'sky', body: '周末的展览\n慢慢地看，不急着拍照。\n\n下次想看\n建筑、摄影与日常生活。' },
+    { title: '10 月 29 日', theme: 'purple', body: '清晨醒来，窗外的树影落在墙面上。\n\n新的一天，不必装下所有事情。让一部分时间留白，也是一种很好的安排。' },
+    { title: '走路时的想法', theme: 'blue', body: '那些在散步途中突然出现的点子，值得有一个自己的小角落。\n\n下次出门，换一条回家的路。' },
+    { title: '一束午后的光', theme: 'white', body: '光线让普通的墙面也有了表情。\n\n今天想记住这个片刻。' }
   ];
-
-  const grid = document.querySelector('#project-grid');
-  const dialog = document.querySelector('#project-dialog');
-  const closeButton = document.querySelector('#dialog-close');
-  const dialogImage = document.querySelector('#dialog-image');
-  const previousButton = document.querySelector('#previous-project');
-  const nextButton = document.querySelector('#next-project');
-  const menuButton = document.querySelector('.menu-toggle');
-  const navigation = document.querySelector('#site-nav');
-  let currentFilter = 'all';
-  let currentView = 'grid';
-  let currentProject = null;
-  let returnFocus = null;
-
-  function drawIcons() {
-    if (window.lucide) window.lucide.createIcons();
+  let notes = structuredClone(originals);
+  try { const saved = JSON.parse(localStorage.getItem(storageKey)); if (Array.isArray(saved) && saved.length >= 8 && saved.every(note => typeof note.title === 'string' && typeof note.body === 'string')) notes = saved; } catch {}
+  let currentMode = 'notes';
+  let editingIndex = null;
+  function escape(value) { return String(value).replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character])); }
+  function renderNotes() {
+    const query = $('#note-search').value.trim().toLocaleLowerCase();
+    const visible = notes.map((note, index) => ({ note, index })).filter(({ note }) => `${note.title} ${note.body}`.toLocaleLowerCase().includes(query));
+    $('#document-grid').innerHTML = visible.map(({ note, index }) => {
+      const lines = note.body.split('\n').filter(Boolean);
+      const body = index === 0 ? `<div class="book-line"><span></span><div>关于日常<br>一本随身的小书</div></div><p>${escape(lines[1] || '')}</p><div class="book-line green"><span></span><div>小小的实验<br>带着好奇心</div></div>` : index === 1 ? lines.map((line, lineIndex) => `<${lineIndex % 2 ? 'div class="card-check"' : 'p class="small-heading"'}>${escape(line)}</${lineIndex % 2 ? 'div' : 'p'}>`).join('') : lines.map(line => `<p>${escape(line)}</p>`).join('');
+      return `<button type="button" class="document-card ${escape(note.theme || 'white')}" data-open-note="${index}" aria-label="打开文档：${escape(note.title)}"><h3>${escape(note.title)}</h3><div class="card-body">${body}${index === 7 ? '<img src="images/interior-1.jpg" alt="安静的室内与自然光" width="600" height="400">' : ''}</div></button>`;
+    }).join('');
+    $('#no-documents').hidden = visible.length > 0;
   }
-
-  function visibleProjects() {
-    return projects.filter(project => currentFilter === 'all' || project.category === currentFilter);
+  function setMode(mode) {
+    currentMode = mode;
+    const names = { notes: '全部文档', tasks: '任务', calendar: '日历' };
+    $('#collection-title').textContent = names[mode]; $('#location-label').textContent = names[mode];
+    $('#mobile-mode').value = mode;
+    $('#document-grid').hidden = mode !== 'notes'; $('#task-view').hidden = mode !== 'tasks'; $('#calendar-view').hidden = mode !== 'calendar';
+    $('.view-tools').hidden = mode !== 'notes'; $('.search-row').hidden = true; $('#no-documents').hidden = true;
+    $$('[data-mode]').forEach(button => { const active = button.dataset.mode === mode; button.classList.toggle('active', active); button.setAttribute('aria-pressed', active); });
+    if (mode === 'notes') renderNotes();
   }
-
-  function watchImage(image) {
-    const error = image.parentElement.querySelector('.image-error');
-    function showError() {
-      if (error) error.hidden = false;
-      image.style.visibility = 'hidden';
-    }
-    image.addEventListener('error', showError);
-    image.addEventListener('load', () => {
-      if (error) error.hidden = true;
-      image.style.visibility = '';
-    });
-    if (image.complete && !image.naturalWidth) showError();
+  function openNote(index) {
+    editingIndex = index; const note = index === null ? { title: '新的想法', body: '' } : notes[index];
+    $('#note-title').value = note.title; $('#note-body').value = note.body; $('#note-status').textContent = '保存在当前浏览器';
+    $('#note-dialog').showModal(); $('#note-title').focus();
   }
-
-  function renderProjects() {
-    const visible = visibleProjects();
-    grid.innerHTML = visible.map(project => `
-      <article class="project" data-id="${project.id}">
-        <button class="project-button" type="button" data-project="${project.id}" aria-label="查看作品：${project.title}">
-          <span class="project-media"><img src="${project.image}" alt="${project.alt}" width="1200" height="900" ${project.number === '01' ? 'fetchpriority="high"' : 'loading="lazy"'}><span class="image-error" hidden><i data-lucide="image-off" aria-hidden="true"></i>图片暂未载入</span><span class="project-open" aria-hidden="true"><i data-lucide="arrow-up-right"></i></span></span>
-          <span class="project-caption"><span><span class="project-title-line"><span class="project-number">${project.number}</span><span class="project-title">${project.title}</span></span><span class="project-subtitle">${project.english}</span></span><span class="project-caption-category">${project.categoryName} / ${project.year}</span></span>
-        </button>
-      </article>`).join('');
-    grid.dataset.view = currentView;
-    document.querySelector('#result-count').textContent = `${visible.length} 个项目`;
-    grid.querySelectorAll('img').forEach(watchImage);
-    drawIcons();
-  }
-
-  function updateDialog(project) {
-    const visible = visibleProjects();
-    const index = visible.findIndex(item => item.id === project.id);
-    currentProject = project;
-    document.querySelector('#dialog-title').textContent = project.title;
-    document.querySelector('#dialog-description').textContent = project.description;
-    document.querySelector('#dialog-category').textContent = `${project.categoryName} / ${project.english}`;
-    document.querySelector('#dialog-position').textContent = `${String(index + 1).padStart(2, '0')} / ${String(visible.length).padStart(2, '0')}`;
-    document.querySelector('#dialog-facts').innerHTML = `<div><dt>系列</dt><dd>${project.series}</dd></div><div><dt>记录年份</dt><dd>${project.year} · 示例</dd></div><div><dt>类型</dt><dd>${project.format}</dd></div><div><dt>素材</dt><dd>Unsplash 摄影</dd></div>`;
-    dialogImage.style.visibility = '';
-    dialogImage.parentElement.querySelector('.image-error').hidden = true;
-    dialogImage.alt = project.alt;
-    dialogImage.src = project.image;
-    document.querySelector('#original-image').href = project.image;
-    previousButton.disabled = index <= 0;
-    nextButton.disabled = index >= visible.length - 1;
-  }
-
-  function openProject(id, trigger) {
-    const project = projects.find(item => item.id === id);
-    if (!project) return;
-    returnFocus = trigger || document.activeElement;
-    updateDialog(project);
-    dialog.showModal();
-    document.documentElement.style.overflow = 'hidden';
-    dialog.scrollTop = 0;
-    closeButton.focus();
-  }
-
-  function stepProject(direction) {
-    if (!currentProject) return;
-    const visible = visibleProjects();
-    const index = visible.findIndex(item => item.id === currentProject.id);
-    const next = visible[index + direction];
-    if (next) updateDialog(next);
-  }
-
-  function setMenu(open) {
-    if (menuButton.getAttribute('aria-expanded') === String(open)) return;
-    navigation.classList.toggle('is-open', open);
-    menuButton.setAttribute('aria-expanded', String(open));
-    menuButton.setAttribute('aria-label', open ? '关闭导航' : '打开导航');
-    menuButton.innerHTML = `<i data-lucide="${open ? 'x' : 'menu'}"></i>`;
-    drawIcons();
-  }
-
-  document.querySelectorAll('[data-filter]').forEach(button => {
-    button.addEventListener('click', () => {
-      currentFilter = button.dataset.filter;
-      document.querySelectorAll('[data-filter]').forEach(item => {
-        const active = item === button;
-        item.classList.toggle('is-active', active);
-        item.setAttribute('aria-pressed', String(active));
-      });
-      renderProjects();
-    });
+  document.addEventListener('click', event => { const noteButton = event.target.closest('[data-open-note]'); if (noteButton) openNote(Number(noteButton.dataset.openNote)); if (event.target.closest('[data-new-note]')) openNote(null); });
+  $('#save-note').addEventListener('click', () => {
+    const title = $('#note-title').value.trim(); if (!title) { $('#note-status').textContent = '请为文档起一个名字。'; $('#note-title').focus(); return; }
+    const note = { title, body: $('#note-body').value, theme: editingIndex === null ? 'white' : notes[editingIndex].theme };
+    if (editingIndex === null) { notes.unshift(note); editingIndex = 0; } else notes[editingIndex] = note;
+    try { localStorage.setItem(storageKey, JSON.stringify(notes)); $('#note-status').textContent = '已保存'; } catch { $('#note-status').textContent = '当前会话已保存，浏览器存储暂不可用。'; }
+    renderNotes();
   });
-
-  document.querySelectorAll('[data-view]').forEach(button => {
-    if (button.tagName !== 'BUTTON') return;
-    button.addEventListener('click', () => {
-      currentView = button.dataset.view;
-      grid.dataset.view = currentView;
-      document.querySelectorAll('button[data-view]').forEach(item => {
-        const active = item === button;
-        item.classList.toggle('is-active', active);
-        item.setAttribute('aria-pressed', String(active));
-      });
-    });
-  });
-
-  grid.addEventListener('click', event => {
-    const button = event.target.closest('[data-project]');
-    if (button) openProject(button.dataset.project, button);
-  });
-  closeButton.addEventListener('click', () => dialog.close());
-  dialog.addEventListener('click', event => {
-    if (event.target === dialog) dialog.close();
-  });
-  dialog.addEventListener('close', () => {
-    document.documentElement.style.overflow = '';
-    currentProject = null;
-    if (returnFocus && returnFocus.isConnected) returnFocus.focus();
-  });
-  previousButton.addEventListener('click', () => stepProject(-1));
-  nextButton.addEventListener('click', () => stepProject(1));
-  dialog.addEventListener('keydown', event => {
-    if (event.key === 'ArrowLeft') { event.preventDefault(); stepProject(-1); }
-    if (event.key === 'ArrowRight') { event.preventDefault(); stepProject(1); }
-  });
-  menuButton.addEventListener('click', () => setMenu(menuButton.getAttribute('aria-expanded') !== 'true'));
-  navigation.querySelectorAll('a').forEach(link => link.addEventListener('click', () => setMenu(false)));
-  document.addEventListener('keydown', event => {
-    if (event.key === 'Escape' && menuButton.getAttribute('aria-expanded') === 'true') {
-      setMenu(false);
-      menuButton.focus();
-    }
-  });
-  document.addEventListener('click', event => {
-    const path = event.composedPath();
-    if (!path.includes(navigation) && !path.includes(menuButton)) setMenu(false);
-  });
-  watchImage(dialogImage);
-  renderProjects();
+  $('#note-dialog').addEventListener('click', event => { if (event.target === $('#note-dialog')) $('#note-dialog').close(); });
+  $$('[data-mode]').forEach(button => button.addEventListener('click', () => setMode(button.dataset.mode)));
+  const modes = ['notes', 'tasks', 'calendar'];
+  $('#previous-mode').addEventListener('click', () => setMode(modes[(modes.indexOf(currentMode) + 2) % 3]));
+  $('#next-mode').addEventListener('click', () => setMode(modes[(modes.indexOf(currentMode) + 1) % 3]));
+  $$('button[data-layout]').forEach(button => button.addEventListener('click', () => { $('#document-grid').dataset.layout = button.dataset.layout; $$('button[data-layout]').forEach(other => { const active = other === button; other.classList.toggle('active', active); other.setAttribute('aria-pressed', active); }); }));
+  $('#search-toggle').addEventListener('click', () => { setMode('notes'); $('.search-row').hidden = false; $('#note-search').focus(); });
+  $('#search-close').addEventListener('click', () => { $('#note-search').value = ''; $('.search-row').hidden = true; renderNotes(); }); $('#note-search').addEventListener('input', renderNotes);
+  function updateTasks() { const tasks = $$('#task-view input'); $('.task-summary').textContent = `${tasks.filter(input => input.checked).length} / ${tasks.length} 项已完成`; }
+  $$('#task-view input').forEach(input => input.addEventListener('change', updateTasks));
+  $('#calendar-grid').innerHTML = ['一', '二', '三', '四', '五', '六', '日'].map(day => `<span class="day-label">${day}</span>`).join('') + Array.from({ length: 35 }, (_, index) => { const day = index - 2; return `<span class="${day < 1 || day > 31 ? 'muted' : day === 29 ? 'today' : ''}">${day < 1 ? day + 30 : day > 31 ? day - 31 : day}${day === 29 ? '<br>今日' : ''}</span>`; }).join('');
+  const purposes = {
+    notes: ['把想法留下来', '从一句话，<br>到一个新点子。', '一段读书感想、一个突然的念头，或是刚刚路过的美好。打开一页，写下来，让思绪慢慢成形。'],
+    plans: ['把日子安排妥当', '小小的计划，<br>刚刚好的节奏。', '把待办清单放进日历，为重要的事情留出时间。安排一天，也给意料之外的好事留一点余地。'],
+    collections: ['让喜欢的事物相遇', '一些片刻，<br>值得慢慢收集。', '一张照片、一段文字、一处想去的地方。把零散的灵感放在一起，让它们在合适的时候重新点亮你。']
+  };
+  const purposeButtons = $$('[data-purpose]');
+  function selectPurpose(button) { purposeButtons.forEach(other => { other.setAttribute('aria-selected', other === button); other.tabIndex = other === button ? 0 : -1; }); const content = purposes[button.dataset.purpose]; $('#purpose-eyebrow').textContent = content[0]; $('#purpose-title').innerHTML = content[1]; $('#purpose-description').textContent = content[2]; }
+  purposeButtons.forEach((button, index) => { button.addEventListener('click', () => selectPurpose(button)); button.addEventListener('keydown', event => { if (['ArrowLeft', 'ArrowRight'].includes(event.key)) { event.preventDefault(); const next = purposeButtons[(index + (event.key === 'ArrowRight' ? 1 : 2)) % 3]; selectPurpose(next); next.focus(); } }); }); selectPurpose(purposeButtons[0]);
+  $$('button[data-paper-theme]').forEach(button => button.addEventListener('click', () => { $('.theme-preview').dataset.paperTheme = button.dataset.paperTheme; $$('button[data-paper-theme]').forEach(other => other.setAttribute('aria-pressed', other === button)); }));
+  $$('[data-billing]').forEach(button => button.addEventListener('click', () => { const yearly = button.dataset.billing === 'yearly'; $$('[data-billing]').forEach(other => other.setAttribute('aria-pressed', other === button)); $('#plan-price').innerHTML = `¥ ${yearly ? '28' : '36'}<span>/ 月</span>`; $('#billing-caption').textContent = `${yearly ? '按年' : '按月'}计费 · 示例方案`; }));
+  $('.menu-toggle').addEventListener('click', () => { const open = $('.site-header').classList.toggle('menu-open'); $('.menu-toggle').setAttribute('aria-expanded', open); $('.menu-toggle').setAttribute('aria-label', open ? '关闭导航' : '打开导航'); });
+  $$('#site-nav a').forEach(link => link.addEventListener('click', () => { $('.site-header').classList.remove('menu-open'); $('.menu-toggle').setAttribute('aria-expanded', 'false'); }));
+  const mobileMode = document.createElement('select');
+  mobileMode.id = 'mobile-mode'; mobileMode.className = 'mobile-mode'; mobileMode.setAttribute('aria-label', '选择文档视图');
+  mobileMode.innerHTML = '<option value="notes">全部文档</option><option value="tasks">任务</option><option value="calendar">日历</option>';
+  $('.document-location').after(mobileMode);
+  mobileMode.addEventListener('change', () => setMode(mobileMode.value));
+  renderNotes(); updateTasks(); window.lucide?.createIcons();
 })();

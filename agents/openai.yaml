@@ -1,4 +1,4 @@
 interface:
-  display_name: "Clearfolio · 清爽文档与作品秩序"
-  short_description: "用清晰排版、轻量导航与克制色彩构建有秩序的博客、知识库和内容型产品页面"
-  default_prompt: "使用 $clearfolio，按项目用途创建清爽、有内容秩序且有辨识度的前端，保留现有框架和功能。"
+  display_name: "Clearfolio · 纸张文档美学"
+  short_description: "贴近 Craft 的纸张材质、衬线标题、玻璃导航和彩色文档，可适配内容网站与工具"
+  default_prompt: "使用 $clearfolio，创建贴近 Craft 视觉语言的前端，匹配参考构图与细节，并保留我的品牌、框架与功能。"
